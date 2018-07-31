@@ -2,7 +2,7 @@ from src import king_bot, settings
 import sys
 
 
-gameworld = 'COM5'  # choose uppercase (exact world name) - optional
+gameworld = 'COMX'  # choose uppercase (exact world name) - optional
 email = 'test@gmail.com'  # optional
 password = 'save_password4000'  # optional
 proxy = ''  # optional
@@ -22,3 +22,5 @@ kingbot.sort_danger_farms(
 
 kingbot.dodge_attack(village=0, units=[1, 2, 11], target=[-10, 53])
 kingbot.dodge_attack(village=1, units=[-1], target=[-20, 60])
+
+kingbot.upgrade_units_smithy(village=0, units=[21, 25, 23])

@@ -10,6 +10,7 @@ from .util_game import close_welcome_screen
 from .utils import log
 from .farming import start_farming_thread, start_custom_farmlist_thread, sort_danger_farms_thread
 from .dodge_attack import check_for_attack_thread
+from .upgrade import upgrade_units_smithy_thread
 from .settings import settings
 
 
@@ -63,7 +64,8 @@ class king_bot:
             if not email or not password or not self.gameworld:
                 # read login credentials
                 file = open(settings.credentials_path, "r")
-                text = file.read()
+                lines = file.read().splitlines()
+                text = lines[0]
                 file.close()
 
                 if not self.gameworld:
@@ -126,9 +128,9 @@ class king_bot:
         Thread(target=start_farming_thread, args=[
                self.browser, village, farmlists, interval]).start()
 
-    def start_custom_farmlist(self) -> None:
+    def start_custom_farmlist(self, reload: bool = False) -> None:
         Thread(target=start_custom_farmlist_thread,
-               args=[self.browser]).start()
+               args=[self.browser, reload]).start()
 
     def sort_danger_farms(self, farmlists: list, to_list: int, red: bool, yellow: bool, interval: int) -> None:
         Thread(target=sort_danger_farms_thread, args=[
@@ -148,3 +150,7 @@ class king_bot:
 
         Thread(target=check_for_attack_thread, args=[
                self.browser, village, interval, units, target]).start()
+
+    def upgrade_units_smithy(self, village: int, units: list, interval: int = 1000) -> None:
+        Thread(target=upgrade_units_smithy_thread, args=[
+               self.browser, village, units, interval]).start()

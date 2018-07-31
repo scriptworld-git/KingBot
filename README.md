@@ -22,6 +22,7 @@ __youtube video:__ how to setup the bot. [click here !](https://youtu.be/JGqBnTL
     - [farmlists as .txt file (no travian plus needed)](#farmlists-as-txt-file-no-travian-plus-needed)
     - [adventures](#adventures)
     - [dodge incoming attacks](#dodge-incoming-attacks)
+    - [upgrade units in smithy](#upgrade-units-in-smithy)
     - [upgrade resource fields / buildings](#upgrade-resource-fields--buildings)
 - [start options](#start-options)
     - [provide credentials](#provide-credentials)
@@ -69,9 +70,10 @@ just an overview with method signatures. for details check each chapter.
 ```python
 def start_adventures(interval: int = 100) -> None:
 def start_farming(village: int, farmlists: list, interval: int) -> None:
-def start_custom_farmlist() -> None:
+def start_custom_farmlist(reload: bool = False) -> None:
 def sort_danger_farms(farmlists: list, to_list: int, red: bool, yellow: bool, interval: int) -> None:
 def dodge_attack(village: int, interval: int = 600, units: list = [], target: list = []) -> None:
+def upgrade_units_smithy(village: int, units: list, interval: int = 1000) -> None:
 ```
 
 ## farming (travian plus)
@@ -163,8 +165,12 @@ _adding a unit value of `-1` will send **all** units of this type to this farm._
 add the following line to your `start.py` script:
 
 ```python
-kingbot.start_custom_farmlist()
+kingbot.start_custom_farmlist(reload=False)
 ```
+
+__reload:__  
+if you set this value to `True` the bot will rescan your farmlist file every minute for changing lines  
+you can add or remove farms without restarting the script
 
 ## adventures
 
@@ -199,6 +205,39 @@ insert `-1` _(units=[-1])_ to save **all** available units in this village
 
 **target:**  
 first index is the x-coordinate and second for the y-coordinate of the village the bot will send the units for a robbery
+
+## upgrade units in smithy
+
+```python
+kingbot.upgrade_units_smithy(village=0, units=[21, 22])
+```
+__village:__  
+index of village _(starting at 0)_
+
+__units:__  
+list of units you want to upgrade   
+first one with highest priority, last one with lowest  
+
+| roman                  | teuton              | gaul                  |
+| ---------------------- | ------------------- | --------------------- |
+| 1: legionnaire         | 11: clubswinger     | 21: phalanx           |
+| 2: praetorian          | 12: spearfighter    | 22: swordsman         |
+| 3: imperian            | 13: axefighter      | 23: pathfinder        |
+| 4: equites legati      | 14: scout           | 24: theutates thunder |
+| 5: equites imperatoris | 15: paladin         | 25: druidrider        |
+| 6: equites caesaris    | 16: teutonic knight | 26: headuan           |
+| 7: battering ram       | 17: ram             | 27: ram               |
+| 8: fire catapult       | 18: catapult        | 28: trebuchet         |
+| 9: senator             | 19: chief           | 29: chieftain         |
+| 10: settler            | 20: settler         | 30: settler           |
+
+the bot checks if it can upgrade given units in given order. first it checks swordsman in this example and if they are not available or maxed out, it will try to upgrade phalax again.  
+you can increase the list as long as you want to.
+
+the bot can't switch smithy pages for now, so make sure the window is big enough to cover 8 slots.   
+By default this should be the case, otherwise it will just cover the 4 slots on the front for now.
+
+sleeping time will be the time the academy needs to finish the current research, so the bot won't wake up unnecessarily in the given interval.
 
 ## upgrade resource fields / buildings
 

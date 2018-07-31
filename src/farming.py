@@ -1,24 +1,26 @@
 from .custom_driver import client, use_browser
 from .settings import settings
 import time
-from .utils import log
+from .utils import log, check_for_lines
 from .village import open_building, open_city, open_village
 from .util_game import close_modal
 import schedule
+from threading import Thread
+from random import randint
 
 
 def start_farming_thread(browser: client, village: int, farmlists: list, interval: int) -> None:
     # todo exit when in beginners protection
-    time.sleep(3)
+    time.sleep(randint(0, 10))  # starting sleep timer
 
     while True:
         start_farming(browser, village, farmlists)
-        time.sleep(interval)
+        time.sleep(interval + randint(0, 10))  # randomize intervals
 
 
 @use_browser
 def start_farming(browser: client, village: int, farmlists: list) -> None:
-    log("farming thread in village {} waking up".format(village))
+    #log("farming thread in village {} waking up".format(village))
 
     open_village(browser, village)
     open_city(browser)
@@ -46,25 +48,24 @@ def start_farming(browser: client, village: int, farmlists: list) -> None:
     btn = browser.find(
         "//button[contains(@class, 'startRaid')]")
     browser.click(btn, 1)
-    log("farmlist sent")
+    log("farmlists: {} sent in village: {}".format(str(farmlists), str(village)))
 
     close_modal(browser)
 
-    log("farming thread in village {} sleeping".format(village))
+    #log("farming thread in village {} sleeping".format(village))
 
 
 def sort_danger_farms_thread(browser: client, farmlists: list, to_list: int, red: bool, yellow: bool, interval: int) -> None:
-    time.sleep(2)
+    time.sleep(randint(0, 10))  # random sleeping at start
 
     while True:
         sort_danger_farms(browser, farmlists, to_list, red, yellow)
-        time.sleep(interval)
-# endregion
+        time.sleep(interval + randint(0, 10))  # randomized intervals
 
 
 @use_browser
 def sort_danger_farms(browser: client, farmlists: list, to_list: int, red: bool, yellow: bool) -> None:
-    print("sorting farms started...")
+    #log("sorting farms started...")
 
     open_city(browser)
     open_building(browser, 32)
@@ -136,7 +137,7 @@ def sort_danger_farms(browser: client, farmlists: list, to_list: int, red: bool,
                             ".//a[contains(@class, 'closeWindow')]")
                         browser.click(closemodal, 2)
 
-                        print("moved one farm")
+                        log("moved farm to save list")
             except:
                 # farm never got sent
                 pass
@@ -147,54 +148,69 @@ def sort_danger_farms(browser: client, farmlists: list, to_list: int, red: bool,
         browser.click(btnback, 1)
 
     close_modal(browser)
-    print("sorting farms going to sleep")
+    #log("sorting farms going to sleep")
 
 
-def start_custom_farmlist_thread(browser: client) -> None:
-    with open(settings.farmlist_path, "r") as file:
-        lines = file.readlines()
+def start_custom_farmlist_thread(browser: client, reload: bool, interval: int = 60) -> None:
+    # thread that executes jobs
+    Thread(target=run_jobs).start()
 
-    for line in lines:
-        args = line.split(";")
-
-        units = args[4]
-        unit_list = units.split(",")
-        unit_dict = {}
-
-        for i in range(0, len(unit_list), 2):
-            unit_dict[int(unit_list[i])] = int(unit_list[i + 1])
-
-        # shedule task
-        schedule.every(int(args[2])).seconds.do(
-            send_farm, browser=browser, x=args[0], y=args[1], village=args[3], units=unit_dict)
-        print("job started")
-
-    browser.use()
-
-    for line in lines:
-        args = line.split(";")
-
-        units = args[4]
-        unit_list = units.split(",")
-        unit_dict = {}
-
-        for i in range(0, len(unit_list), 2):
-            unit_dict[int(unit_list[i])] = int(unit_list[i + 1])
-
-        # send one time at start
-        send_farm(browser=browser, x=args[0],
-                  y=args[1], village=args[3], units=unit_dict)
-
-    browser.done()
+    jobs: list = []  # current jobs
 
     while True:
-        schedule.run_pending()
-        time.sleep(1)
+        job_dict = check_for_lines(
+            path=settings.farmlist_path, current_lines=jobs)
+
+        # remove jobs that are not present anymore
+        for rem_job in job_dict['remove']:
+            schedule.clear(rem_job)
+            jobs.remove(rem_job)
+
+        # add new jobs
+        for add_job in job_dict['add']:
+            args = add_job.split(";")
+
+            units = args[4]
+            unit_list = units.split(",")
+            unit_dict = {}
+
+            for i in range(0, len(unit_list), 2):
+                unit_dict[int(unit_list[i])] = int(unit_list[i + 1])
+
+            # shedule task
+            schedule.every(int(args[2])).seconds.do(
+                send_farm, browser=browser, x=args[0], y=args[1], village=args[3], units=unit_dict).tag(add_job)
+
+            jobs.append(add_job)
+            log("job " + add_job + " started")
+
+        browser.use()
+
+        for add_job in job_dict['add']:
+            args = add_job.split(";")
+
+            units = args[4]
+            unit_list = units.split(",")
+            unit_dict = {}
+
+            for i in range(0, len(unit_list), 2):
+                unit_dict[int(unit_list[i])] = int(unit_list[i + 1])
+
+            # send one time at start
+            send_farm(browser=browser, x=args[0],
+                      y=args[1], village=args[3], units=unit_dict)
+
+        browser.done()
+
+        if not reload:
+            break
+
+        time.sleep(interval)
 
 
 @use_browser
 def send_farm(browser: client, village: int, x: int, y: int, units: dict) -> None:
-    log("sending units to: ({}/{}) ...".format(x, y))
+    #log("sending units to: ({}/{}) ...".format(x, y))
 
     open_village(browser, int(village))
     open_city(browser)
@@ -265,3 +281,9 @@ def send_farm(browser: client, village: int, x: int, y: int, units: dict) -> Non
     browser.click(btn, 1)
 
     log("units sent to: ({}/{}).".format(x, y))
+
+
+def run_jobs():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
