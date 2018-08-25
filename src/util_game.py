@@ -43,3 +43,30 @@ def village_list(browser: client) -> []:
         village_name = village_name.get_attribute("innerHTML")
         villages_list.append(village_name)
     return villages_list
+
+def stationed_troops(browser: client) -> dict:
+    troops_dict = {}
+    foo = 0
+    troops_stationed = browser.find("//div[@id='troopsStationed']/ul/ul")
+    lis = troops_stationed.find_elements_by_xpath(".//li")
+    tribe = lis[0].get_attribute("tooltip-translate")
+    troop_name = troops_name(browser, tribe)
+    for listed in lis[2:]:
+        div = listed.find_element_by_xpath(".//div")
+        troop_amount = div.get_attribute("innerHTML")
+        if len(troop_amount) == 0:
+            troops_dict[troop_name[foo]] = 0
+            foo += 1
+        else:
+            troops_dict[troop_name[foo]] = int(troop_amount)
+            foo += 1
+    return troops_dict
+
+def troops_name(browser: client, tribe: str) -> list:
+    troops_dict = {"tribe_1":
+        ["Legionnaire","Praetorian","Imperian","Equites Legati", "Equites Imperatoris", "Equites Caesaris", "Battering Ram", "Fire Catapult", "Senator", "Settler", "Hero"],
+        "tribe_3":
+        ["Phalanx", "Swordsman", "Pathfinder", "Theutates Thunder", "Druidrider", "Haeduan", "Ram", "Trebuchet", "Chieftain", "Settler", "Hero"],
+        "tribe_2":
+        ["Clubswinger", "Spearfighter", "Axefighter", "Scout", "Paladin", "Teutonic Knight", "Ram", "Catapult", "Chief", "Settler", "Hero"]}
+    return troops_dict[tribe.lower()]
