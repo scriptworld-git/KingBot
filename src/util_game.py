@@ -1,14 +1,15 @@
 from .custom_driver import client
 from .utils import log
+from enum import Enum
 
 
-def close_modal(browser: client):
+def close_modal(browser: client) -> None:
     el = browser.find("//div[@class='modalContent']")
     el = el.find_element_by_xpath(".//a[@class='closeWindow clickable']")
     browser.click(el)
 
 
-def close_welcome_screen(browser: client):
+def close_welcome_screen(browser: client) -> None:
     wc = browser.find("//div[contains(@class, 'welcomeScreen')]")
     log("closing welcome-screen")
     el = wc.find_element_by_xpath(
@@ -16,33 +17,34 @@ def close_welcome_screen(browser: client):
     browser.click(el)
 
 
-def check_resources(browser: client) -> {}:
+def check_resources(browser: client) -> dict:
     resources_list = ["wood", "clay", "iron", "crop"]
     resources = {}
     for res in resources_list:
-        find_resources = browser.find("//div[@class='stockContainer {0}']".format(res))
-        find_resources = find_resources.find_element_by_xpath(".//div[contains(@class, 'progressbar')]")
+        find_resources = browser.find(
+            "//div[@class='stockContainer {0}']".format(res))
+        find_resources = find_resources.find_element_by_xpath(
+            ".//div[contains(@class, 'progressbar')]")
         value = int(find_resources.get_attribute("value"))
         resources[res] = value
     return resources
 
-def shortcut(browser: client, shortcut: str):
-    shortcut_list = ["marketplace", "barrack", "stable", "workshop"]
-    shortcut_link = browser.find("//div[@id='quickLinks']")
-    shortcut_link = shortcut_link.find_element_by_xpath(".//div[contains(@class, 'slotWrapper')]")
-    link = shortcut_link.find_elements_by_xpath(".//div[contains(@class, 'slotContainer')]")
-    browser.click(link[shortcut_list.index(shortcut.lower())], 1)
 
-def village_list(browser: client) -> []:
-    villages_list = []
-    ul = browser.find("//div[contains(@class, 'villageListDropDown')]")
-    ul = ul.find_element_by_xpath(".//ul")
-    lis = ul.find_elements_by_xpath(".//li")
-    for village in lis:
-        village_name = village.find_element_by_xpath(".//div[contains(@class, 'villageEntry')]")
-        village_name = village_name.get_attribute("innerHTML")
-        villages_list.append(village_name)
-    return villages_list
+class shortcut(Enum):
+    marketplace = 0
+    barrack = 1
+    stable = 2
+    workshop = 3
+
+
+def open_shortcut(browser: client, sc: shortcut) -> None:
+    shortcut_link = browser.find("//div[@id='quickLinks']")
+    shortcut_link = shortcut_link.find_element_by_xpath(
+        ".//div[contains(@class, 'slotWrapper')]")
+    link = shortcut_link.find_elements_by_xpath(
+        ".//div[contains(@class, 'slotContainer')]")
+    browser.click(link[sc.value], 1)
+
 
 def stationed_troops(browser: client) -> dict:
     troops_dict = {}
@@ -62,6 +64,7 @@ def stationed_troops(browser: client) -> dict:
             foo += 1
     return troops_dict
 
+
 def troops_name(browser: client, tribe: str) -> list:
     troops_dict = {"tribe_1":
         ["legionnaire","praetorian","imperian","equites_legati","equites_imperatoris","equites_caesaris","battering_ram","fire_catapult","senator","settler","hero"],
@@ -70,3 +73,4 @@ def troops_name(browser: client, tribe: str) -> list:
         "tribe_2":
         ["clubswinger","spearfighter","axefighter","scout","paladin","teutonic_knight","ram","catapult","chief","settler","hero"]}
     return troops_dict[tribe.lower()]
+
