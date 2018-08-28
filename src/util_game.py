@@ -64,9 +64,9 @@ def stationed_troops(browser: client) -> dict:
 
 def troops_name(browser: client, tribe: str) -> list:
     troops_dict = {"tribe_1":
-        ["Legionnaire","Praetorian","Imperian","Equites Legati", "Equites Imperatoris", "Equites Caesaris", "Battering Ram", "Fire Catapult", "Senator", "Settler", "Hero"],
+        ["legionnaire","praetorian","imperian","equites_legati","equites_imperatoris","equites_caesaris","battering_ram","fire_catapult","senator","settler","hero"],
         "tribe_3":
-        ["Phalanx", "Swordsman", "Pathfinder", "Theutates Thunder", "Druidrider", "Haeduan", "Ram", "Trebuchet", "Chieftain", "Settler", "Hero"],
+        ["phalanx","swordsman","pathfinder","theutates_thunder","druidrider","haeduan","ram","trebuchet","chieftain","settler","hero"],
         "tribe_2":
-        ["Clubswinger", "Spearfighter", "Axefighter", "Scout", "Paladin", "Teutonic Knight", "Ram", "Catapult", "Chief", "Settler", "Hero"]}
+        ["clubswinger","spearfighter","axefighter","scout","paladin","teutonic_knight","ram","catapult","chief","settler","hero"]}
     return troops_dict[tribe.lower()]
